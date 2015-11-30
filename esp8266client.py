@@ -81,6 +81,17 @@ def process_request(response):
 
 
 
+def raw_send(where, raw, port, ssid, password):
+	send_cmd("AT+CWMODE=3") # softAP+station mode
+	conn_string = 'AT+CWJAP="%s","%s"' % (ssid, password)
+	send_cmd(conn_string) # send user and password of router
+	send_cmd("AT+CIFSR")
+	send_string ='AT+CIPSTART="TCP","%s",%s' % (where, port)
+	send_cmd(send_string)
+	send_cmd("AT+CIPMODE=1")
+	send_cmd("AT+CIPSEND")
+	send_cmd(raw)
+	send_cmd('+++')
 
 
 def serve():		
@@ -141,7 +152,6 @@ if __name__ == '__main__':
 	send_cmd("AT+CWMODE=2")	 # set device mode (1=client, 2=AP, 3=both)
 	send_cmd("AT+CIPMUX=1") # multiple connection mode
 	send_cmd("AT+CIPSERVER=0")
-	# send_cmd('AT+CIPSTART="TCP")
 	send_cmd("AT+CIPSTATUS=?")
 	send_cmd("AT+CIFSR", 5) # check IP address	
 
@@ -158,7 +168,6 @@ if __name__ == '__main__':
 	send_cmd("AT+CWMODE=2")	 # set device mode (1=client, 2=AP, 3=both)
 	send_cmd("AT+CIPMUX=1") # multiple connection mode
 	send_cmd("AT+CIPSERVER=0")
-	# send_cmd('AT+CIPSTART="TCP")
 	send_cmd("AT+CIPSTATUS=?")
 	send_cmd("AT+CIFSR", 5) # check IP address	
 
@@ -167,5 +176,6 @@ if __name__ == '__main__':
 	send_cmd("AT+GMR")
 
 	send_cmd("AT+RST")
+
 
 
