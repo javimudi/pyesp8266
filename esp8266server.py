@@ -79,37 +79,93 @@ def process_request(response):
 		# process response
 		send_response(response, cid)
 
-if len(sys.argv) != 5:
-	print "Usage: esp8266test.py port baud_rate ssid password"
-	sys.exit()
 
-port = sys.argv[1]
-#Baud rate should be: 9600 or 115200
-speed = sys.argv[2]
-ssid = sys.argv[3]
-pwd = sys.argv[4]
-p = 80
 
-ser = serial.Serial(port,speed)
-if ser.isOpen():
-    ser.close()
-ser.open()
-ser.isOpen()
 
-send_cmd( "AT" )
-send_cmd( "AT+CWMODE=1" ) # set device mode (1=client, 2=AP, 3=both)
-send_cmd( "AT+CWLAP", 30) # scan for WiFi hotspots
-send_cmd( "AT+CWJAP=\""+ssid+"\",\""+pwd+"\"", 5 ) # connect
-send_cmd( "AT+CIFSR", 5) # check IP address
 
-send_cmd( "AT+CIPMUX=1" ) # multiple connection mode
-send_cmd("AT+CIPSERVER=1," + str(p))
+def serve():		
 
-# process requests
-while (1):
-	process_request("GOT IT! (" + str(datetime.datetime.now()) + ")")
-	sleep(0.3)
+	port = sys.argv[1]
+	#Baud rate should be: 9600 or 115200
+	speed = sys.argv[2]
+	ssid = sys.argv[3]
+	pwd = sys.argv[4]
+	p = 80
 
-ser.close()
+	ser = serial.Serial(port,speed)
+	if ser.isOpen():
+	    ser.close()
+	ser.open()
+	ser.isOpen()
+
+	send_cmd( "AT" )
+	send_cmd( "AT+CWMODE=2" ) # set device mode (1=client, 2=AP, 3=both)
+	send_cmd( "AT+CWLAP", 30) # scan for WiFi hotspots
+	send_cmd( "AT+CWJAP=\""+ssid+"\",\""+pwd+"\"", 5 ) # connect
+	send_cmd( "AT+CIFSR", 5) # check IP address
+
+	send_cmd( "AT+CIPMUX=1" ) # multiple connection mode
+	send_cmd("AT+CIPSERVER=1," + str(p))
+
+	# process requests
+	while (1):
+		process_request("GOT IT! (" + str(datetime.datetime.now()) + ")")
+		sleep(0.3)
+
+	ser.close()
+
+
+if __name__ == '__main__':
+	
+	try:
+		port = sys.argv[1]
+	except:
+		port = '/dev/ttyUSB1'
+
+	try:
+		speed = sys.argv[2] #Baud rate should be: 9600 or 115200
+	except:
+		speed = 9600
+
+	p = 8080
+
+	ser = serial.Serial(port,speed)
+	if ser.isOpen():
+	    ser.close()
+	ser.open()
+	ser.isOpen()
+
+	send_cmd("AT")
+	send_cmd("AT+CWMODE=1") # set device mode (1=client, 2=AP, 3=both)
+	send_cmd("AT+CWLAP", 30) # scan for WiFi hotspots	
+	send_cmd("AT+CWMODE=2")	 # set device mode (1=client, 2=AP, 3=both)
+	send_cmd("AT+CIPMUX=1") # multiple connection mode
+	send_cmd("AT+CIPSERVER=0")
+	# send_cmd('AT+CIPSTART="TCP")
+	send_cmd("AT+CIPSTATUS=?")
+	send_cmd("AT+CIFSR", 5) # check IP address	
+
+	send_cmd("AT+CWASP?")
+	# Firmware
+	send_cmd("AT+GMR")
+
+	send_cmd("AT+RST")
+
+
+	send_cmd("AT")
+	send_cmd("AT+CWMODE=3") # set device mode (1=client, 2=AP, 3=both)
+	send_cmd("AT+CWLAP", 30) # scan for WiFi hotspots	
+	send_cmd("AT+CWMODE=2")	 # set device mode (1=client, 2=AP, 3=both)
+	send_cmd("AT+CIPMUX=1") # multiple connection mode
+	send_cmd("AT+CIPSERVER=0")
+	# send_cmd('AT+CIPSTART="TCP")
+	send_cmd("AT+CIPSTATUS=?")
+	send_cmd("AT+CIFSR", 5) # check IP address	
+
+	send_cmd("AT+CWASP?")
+	# Firmware
+	send_cmd("AT+GMR")
+
+	send_cmd("AT+RST")
 
 
