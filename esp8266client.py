@@ -5,6 +5,7 @@ import logging
 import sys, serial
 from time import *
 import datetime, string
+import json
 
 def enum(**enums):
     return type('Enum', (), enums)
@@ -42,7 +43,8 @@ def send_cmd( sCmd, waitTm=1, retry=5, delay=1):
 def send_response(response, cid='0'):
 	# no need to wait for response between these commands (or retry), so just send them out
 	# ser.flushInput()
-	ser.write( "AT+CIPSEND=" + cid + "," + str(len(response)) + "\r\n")
+	# ser.write( "AT+CIPSEND=" + cid + "," + str(len(response)) + "\r\n")
+	ser.write( "AT+CIPSEND="+ str(len(response)) + "\r\n")	
 	sleep(0.3)
 	ser.write( response + "\r\n" )
 	sleep(0.3)
@@ -51,15 +53,16 @@ def send_response(response, cid='0'):
 	for i in range(100):
 		while( ser.inWaiting() ):
 			ret = ser.readline().strip( "\r\n" )
-			# print ret
+			print ret
 			if( ret == Status.OK[3] ):
-				# print "send ok!"
+				print "send ok!"
 				send_res = True
 		if send_res: break
 		sleep(0.1)
 
 	sleep(0.3)
-	ser.write( "AT+CIPCLOSE=" + cid + "\r\n" )
+	# ser.write( "AT+CIPCLOSE=" + cid + "\r\n" )
+	ser.write( "AT+CIPCLOSE")	
 	sleep(0.3)
 
 
@@ -83,15 +86,21 @@ def process_request(response):
 
 def raw_send(where, raw, port, ssid, password):
 	send_cmd("AT+CWMODE=3") # softAP+station mode
+	send_cmd("AT+RST")
+	sleep(10)
+	send_cmd("AT+CIPSERVER=0")
+	send_cmd("AT+CIPMUX=0") # multiple connection mode
 	conn_string = 'AT+CWJAP="%s","%s"' % (ssid, password)
 	send_cmd(conn_string) # send user and password of router
+	sleep(20)
+	send_cmd("AT+CWJAP?")
 	send_cmd("AT+CIFSR")
 	send_string ='AT+CIPSTART="TCP","%s",%s' % (where, port)
 	send_cmd(send_string)
-	send_cmd("AT+CIPMODE=1")
-	send_cmd("AT+CIPSEND")
-	send_cmd(raw)
-	send_cmd('+++')
+	send_cmd("AT+CIPMODE=0")
+	sleep(10)
+	send_response(raw)
+
 
 
 def serve():		
@@ -138,7 +147,6 @@ if __name__ == '__main__':
 	except:
 		speed = 9600
 
-	p = 8080
 
 	ser = serial.Serial(port,speed)
 	if ser.isOpen():
@@ -146,36 +154,9 @@ if __name__ == '__main__':
 	ser.open()
 	ser.isOpen()
 
-	send_cmd("AT")
-	send_cmd("AT+CWMODE=1") # set device mode (1=client, 2=AP, 3=both)
-	send_cmd("AT+CWLAP", 30) # scan for WiFi hotspots	
-	send_cmd("AT+CWMODE=2")	 # set device mode (1=client, 2=AP, 3=both)
-	send_cmd("AT+CIPMUX=1") # multiple connection mode
-	send_cmd("AT+CIPSERVER=0")
-	send_cmd("AT+CIPSTATUS=?")
-	send_cmd("AT+CIFSR", 5) # check IP address	
 
-	send_cmd("AT+CWASP?")
-	# Firmware
-	send_cmd("AT+GMR")
-
-	send_cmd("AT+RST")
-
-
-	send_cmd("AT")
-	send_cmd("AT+CWMODE=3") # set device mode (1=client, 2=AP, 3=both)
-	send_cmd("AT+CWLAP", 30) # scan for WiFi hotspots	
-	send_cmd("AT+CWMODE=2")	 # set device mode (1=client, 2=AP, 3=both)
-	send_cmd("AT+CIPMUX=1") # multiple connection mode
-	send_cmd("AT+CIPSERVER=0")
-	send_cmd("AT+CIPSTATUS=?")
-	send_cmd("AT+CIFSR", 5) # check IP address	
-
-	send_cmd("AT+CWASP?")
-	# Firmware
-	send_cmd("AT+GMR")
-
-	send_cmd("AT+RST")
+	data = dict()
+	data['temp'] = 28
 
 
 
